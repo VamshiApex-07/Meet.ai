@@ -82,9 +82,9 @@ function CommandResponsiveDialog({
   className?: string
   showCloseButton?: boolean
 }) {
-   const isMobile =useIsMobile();
-   if(isMobile){
-    return(
+   const isMobile = useIsMobile();
+   if (isMobile) {
+    return (
       <Drawer {...props}>
         <DrawerContent className="overflow-hidden p-0">
           <DrawerHeader className="sr-only">
