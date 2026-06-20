@@ -39,9 +39,17 @@ export function DataTable<TData, TValue>({
             table.getRowModel().rows.map((row) => (
               <TableRow
                 onClick={() => onRowClick?.(row.original)}
+                onKeyDown={(e) => {
+                  if ((e.key === "Enter" || e.key === " ") && onRowClick) {
+                    e.preventDefault()
+                    onRowClick(row.original)
+                  }
+                }}
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
                 className="cursor-pointer"
+                tabIndex={0}
+                role="button"
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className="text-sm p-4">

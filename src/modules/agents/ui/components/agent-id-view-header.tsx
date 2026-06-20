@@ -55,7 +55,7 @@ export const AgentIdViewHeader = ({
       {/* Without modal={false}, the dialog that this dropdown opens cause the website to get unclickable */}
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost">
+          <Button variant="ghost" size="icon" aria-label="Agent actions">
             <MoreVerticalIcon />
           </Button>
         </DropdownMenuTrigger>
