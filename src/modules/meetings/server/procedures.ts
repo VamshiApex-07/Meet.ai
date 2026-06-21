@@ -71,7 +71,7 @@ export const meetingsRouter = createTRPCRouter({
   getMany: protectedProcedure
     .input(
       z.object({
-        page: z.number().default(DEFAULT_PAGE),
+        page: z.number().int().min(1).default(DEFAULT_PAGE),
         pageSize: z
           .number()
           .min(MIN_PAGE_SIZE)
@@ -118,9 +118,11 @@ export const meetingsRouter = createTRPCRouter({
       const [total] = await db
         .select({ count: count() })
         .from(meetings)
+        .innerJoin(agents, eq(meetings.agentId, agents.id))
         .where(
           and(
             eq(meetings.userId, ctx.auth.user.id),
+            eq(agents.userId, ctx.auth.user.id),
             search ? ilike(meetings.name, `%${search}%`) : undefined,
             status ? eq(meetings.status,status) : undefined,
             agentId ? eq(meetings.agentId,agentId) :undefined,

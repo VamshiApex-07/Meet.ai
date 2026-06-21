@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 import { useTRPC } from "@/trpc/client";
@@ -17,6 +18,20 @@ export const MeetingsView = () => {
   const trpc = useTRPC();
   const router = useRouter();
   const [filters, setFilters] = useMeetingsFilters();
+
+  const prevFiltersRef = useRef({ search: filters.search, status: filters.status, agentId: filters.agentId });
+
+  useEffect(() => {
+    const current = { search: filters.search, status: filters.status, agentId: filters.agentId };
+    if (
+      current.search !== prevFiltersRef.current.search ||
+      current.status !== prevFiltersRef.current.status ||
+      current.agentId !== prevFiltersRef.current.agentId
+    ) {
+      prevFiltersRef.current = current;
+      setFilters({ page: 1 });
+    }
+  }, [filters.search, filters.status, filters.agentId, setFilters]);
 
   const { data } = useSuspenseQuery(trpc.meetings.getMany.queryOptions({
     ...filters,
@@ -48,7 +63,7 @@ export const MeetingsViewLoading = () => {
   return (
     <LoadingState
       title="Loading Meetings"
-      description="This may take a fews econds"
+      description="This may take a few seconds"
     />
   );
 };
