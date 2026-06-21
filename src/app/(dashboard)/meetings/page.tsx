@@ -10,7 +10,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { loadSearchParams } from "@/modules/agents/params";
+import { loadSearchParams } from "@/modules/meetings/params";
 import type { SearchParams } from "nuqs/server";
 import { MeetingsListHeader } from "@/modules/meetings/ui/components/meetings-list-header";
 
