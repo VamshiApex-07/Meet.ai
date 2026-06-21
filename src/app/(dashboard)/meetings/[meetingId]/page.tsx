@@ -1,9 +1,5 @@
-const Page = () =>{
-    return(
-        <div>
-            Meetings ID Page
-        </div>
-    )
-}
+const Page = () => {
+  return <div>Meetings ID Page</div>;
+};
 
 export default Page;
