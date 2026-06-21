@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { ColumnDef } from "@tanstack/react-table"
-import { CornerDownRightIcon, VideoIcon } from "lucide-react"
+import { ColumnDef } from "@tanstack/react-table";
+import { CornerDownRightIcon, VideoIcon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge"
-import { GeneratedAvatar } from "@/components/generated-avatar"
+import { Badge } from "@/components/ui/badge";
+import { GeneratedAvatar } from "@/components/generated-avatar";
 
-import { AgentGetOne } from "../../types"
+import { AgentGetOne } from "../../types";
 
 export const columns: ColumnDef<AgentGetOne>[] = [
   {
@@ -23,25 +23,26 @@ export const columns: ColumnDef<AgentGetOne>[] = [
           <span className="font-semibold capitalize">{row.original.name}</span>
         </div>
         <div className="flex items-center gap-x-2">
-          <CornerDownRightIcon className="size-3 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground max-w-[200px] truncate capitalize">
+          <CornerDownRightIcon className="text-muted-foreground size-3" />
+          <span className="text-muted-foreground max-w-[200px] truncate text-sm capitalize">
             {row.original.instructions}
           </span>
         </div>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "meetingCount",
     header: "Meetings",
-    cell: ({row}) => (
+    cell: ({ row }) => (
       <Badge
         variant="outline"
         className="flex items-center gap-x-2 [&>svg]:size-4"
       >
         <VideoIcon className="text-blue-700" />
-        {row.original.meetingCount} meetings {row.original.meetingCount===1 ? "meeting":"meetings"}
+        {row.original.meetingCount} meetings{" "}
+        {row.original.meetingCount === 1 ? "meeting" : "meetings"}
       </Badge>
-    )
-  }
-]
+    ),
+  },
+];

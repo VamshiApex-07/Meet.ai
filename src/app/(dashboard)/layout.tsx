@@ -8,15 +8,15 @@ interface Props {
 }
 
 const Layout = ({ children }: Props) => {
-  return ( 
+  return (
     <SidebarProvider>
       <DashboardSidebar />
-      <main className="flex flex-col h-screen w-screen bg-muted">
+      <main className="bg-muted flex h-screen w-screen flex-col">
         <DashboardNavbar />
         {children}
       </main>
     </SidebarProvider>
   );
 };
- 
+
 export default Layout;

@@ -7,12 +7,12 @@ interface UpdateAgentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialValues: AgentGetOne;
-};
+}
 
 export const UpdateAgentDialog = ({
   open,
   onOpenChange,
-  initialValues
+  initialValues,
 }: UpdateAgentDialogProps) => {
   return (
     <ResponsiveDialog

@@ -8,12 +8,12 @@ interface GeneratedAvatarProps {
   seed: string;
   className?: string;
   variant: "botttsNeutral" | "initials";
-} 
+}
 
 export const GeneratedAvatar = ({
   seed,
   className,
-  variant
+  variant,
 }: GeneratedAvatarProps) => {
   let avatar;
 
