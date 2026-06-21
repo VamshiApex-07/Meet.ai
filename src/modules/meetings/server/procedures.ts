@@ -86,8 +86,8 @@ export const meetingsRouter = createTRPCRouter({
       const data = await db
         .select({
           ...getTableColumns(meetings),
-          agent: agents,
-          duration: sql<number>`EXTRACT(EPOCH FROM (ended_at - started_at))` .as("duration"),
+          agent: { id: agents.id, name: agents.name },
+          duration: sql<number | null>`EXTRACT(EPOCH FROM (ended_at - started_at))` .as("duration"),
 
         })
         .from(meetings)
@@ -95,6 +95,7 @@ export const meetingsRouter = createTRPCRouter({
         .where(
           and(
             eq(meetings.userId, ctx.auth.user.id),
+            eq(agents.userId, ctx.auth.user.id),
             search ? ilike(meetings.name, `%${search}%`) : undefined,
           ),
         )
