@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
     );
   }
   const body = await req.text();
-  if(!verifySignatureWithSDK(body,signature)){
-    NextResponse.json({error:"Invalid Signature"},{status:401});
+  if (!verifySignatureWithSDK(body, signature)) {
+    return NextResponse.json({ error: "Invalid Signature" }, { status: 401 });
   }
 
   let payload: unknown;
