@@ -80,12 +80,14 @@ export const AgentForm = ({
     }),
   );
 
+  const defaultVoice = AGENT_VOICES.find(v => v === initialValues?.voice) ?? "Kore";
+
   const form = useForm<z.infer<typeof agentsInsertSchema>>({
     resolver: zodResolver(agentsInsertSchema),
     defaultValues: {
       name: initialValues?.name ?? "",
       instructions: initialValues?.instructions ?? "",
-      voice: (initialValues?.voice as z.infer<typeof agentsInsertSchema>["voice"]) ?? "Kore",
+      voice: defaultVoice,
     },
   });
 

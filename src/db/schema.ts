@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, pgEnum, unique, foreignKey } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -60,6 +60,17 @@ export const verification = pgTable("verification", {
   ),
 });
 
+export const agentVoice = pgEnum("agent_voice", [
+  "Kore",
+  "Puck",
+  "Charon",
+  "Fenrir",
+  "Aoede",
+  "Leda",
+  "Orus",
+  "Zephyr",
+]);
+
 export const agents = pgTable("agents", {
   id: text("id")
     .primaryKey()
@@ -69,10 +80,12 @@ export const agents = pgTable("agents", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   instructions: text("instructions").notNull(),
-  voice: text("voice").default("Kore").notNull(),
+  voice: agentVoice("voice").default("Kore").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  agentUserUnique: unique().on(table.id, table.userId),
+}));
 
 export const meetingStatus = pgEnum("meeting_status", [
   "upcoming",
@@ -90,9 +103,7 @@ export const meetings = pgTable("meetings", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  agentId: text("agent_id")
-    .notNull()
-    .references(() => agents.id, { onDelete: "cascade" }),
+  agentId: text("agent_id").notNull(),
   status: meetingStatus("status").notNull().default("upcoming"),
   startedAt: timestamp("started_at"),
   endedAt: timestamp("ended_at"),
@@ -101,4 +112,9 @@ export const meetings = pgTable("meetings", {
   summary: text("summary"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  meetingAgentOwnerFk: foreignKey({
+    columns: [table.agentId, table.userId],
+    foreignColumns: [agents.id, agents.userId],
+  }).onDelete("cascade"),
+}));

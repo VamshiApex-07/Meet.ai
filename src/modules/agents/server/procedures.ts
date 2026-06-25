@@ -57,7 +57,7 @@ export const agentsRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const [existingAgent] = await db
         .select({
-          meetingCount: sql<number>`(SELECT count(*) FROM ${meetings} WHERE ${meetings.agentId} = ${agents.id})`,
+          meetingCount: sql<number>`(SELECT count(*)::int FROM ${meetings} WHERE ${meetings.agentId} = ${agents.id})`,
           ...getTableColumns(agents),
         })
         .from(agents)
@@ -86,7 +86,7 @@ export const agentsRouter = createTRPCRouter({
       const { search, page, pageSize } = input;
       const data = await db
         .select({
-          meetingCount: sql<number>`(SELECT count(*) FROM ${meetings} WHERE ${meetings.agentId} = ${agents.id})`,
+          meetingCount: sql<number>`(SELECT count(*)::int FROM ${meetings} WHERE ${meetings.agentId} = ${agents.id})`,
           ...getTableColumns(agents),
         })
         .from(agents)
