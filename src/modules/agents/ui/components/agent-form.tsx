@@ -3,11 +3,18 @@ import { AgentGetOne } from "../../types";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { agentsInsertSchema } from "../../schemas";
+import { agentsInsertSchema, AGENT_VOICES } from "../../schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import {
@@ -51,7 +58,6 @@ export const AgentForm = ({
       onError: (error) => {
         toast.error(error.message);
       },
-      // TODO check if error code is forbidden redirect to /upgrade
     }),
   );
   const updateAgent = useMutation(
@@ -74,12 +80,12 @@ export const AgentForm = ({
     }),
   );
 
-  // ✅ Closing bracket fixed below
   const form = useForm<z.infer<typeof agentsInsertSchema>>({
     resolver: zodResolver(agentsInsertSchema),
     defaultValues: {
       name: initialValues?.name ?? "",
       instructions: initialValues?.instructions ?? "",
+      voice: (initialValues?.voice as z.infer<typeof agentsInsertSchema>["voice"]) ?? "Kore",
     },
   });
 
@@ -127,6 +133,30 @@ export const AgentForm = ({
                   placeholder="You are a helpful math assistant that can answer questions and help with assignments."
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="voice"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Voice</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a voice" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {AGENT_VOICES.map((voice) => (
+                    <SelectItem key={voice} value={voice}>
+                      {voice}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

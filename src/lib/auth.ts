@@ -4,6 +4,11 @@ import { db } from "@/db";
 import * as schema from "@/db/schema";
 
 export const auth = betterAuth({
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://dynamic-happening-abiding.ngrok-free.dev",
+  ],
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_CLIENT_ID as string,

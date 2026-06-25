@@ -31,11 +31,17 @@ Example:
 - Feature X automatically does Y
 - Mention of integration with Z
   `.trim(),
-  model: openai({ model: "gpt-4o", apiKey: process.env.OPENAI_API_KEY }),
+  model: openai({
+    model: "llama-3.3-70b-versatile",
+    apiKey: process.env.GROQ_API_KEY,
+    baseUrl: "https://api.groq.com/openai/v1",
+  }),
 });
 
 export const meetingsProcessing = inngest.createFunction(
-  { id: "meetings/processing" },
+  {
+    id: "meetings/processing",
+  },
   { event: "meetings/processing" },
   async ({ event, step }) => {
     const response = await step.run("fetch-transcript", async () => {
@@ -96,10 +102,13 @@ export const meetingsProcessing = inngest.createFunction(
       });
     });
 
-    const { output } = await summarizer.run(
-      "Summarize the following transcript: " +
-        JSON.stringify(transcriptWithSpeakers)
-    );
+    const { output } = await step.run("summarize", async () => {
+      const runResult = await summarizer.run(
+        "Summarize the following transcript: " +
+          JSON.stringify(transcriptWithSpeakers)
+      );
+      return runResult;
+    });
 
     await step.run("save-summary", async () => {
       await db

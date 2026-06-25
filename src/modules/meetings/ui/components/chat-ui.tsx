@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import type { Channel as StreamChannel } from "stream-chat";
 import {
@@ -14,11 +14,10 @@ import {
 import { useTRPC } from "@/trpc/client";
 import { LoadingState } from "@/components/loading-state";
 
-import "stream-chat-react/dist/css/v2/index.css";
+import "stream-chat-react/dist/css/index.css";
 
 interface ChatUIProps {
   meetingId: string;
-  meetingName: string;
   userId: string;
   userName: string;
   userImage: string | undefined;
@@ -26,7 +25,6 @@ interface ChatUIProps {
 
 export const ChatUI = ({
   meetingId,
-  meetingName,
   userId,
   userName,
   userImage,
@@ -36,10 +34,17 @@ export const ChatUI = ({
     trpc.meetings.generateChatToken.mutationOptions(),
   );
 
+  const generateChatTokenRef = useRef(generateChatToken);
+  generateChatTokenRef.current = generateChatToken;
+
+  const tokenProvider = useRef(async () => {
+    return generateChatTokenRef.current();
+  });
+
   const [channel, setChannel] = useState<StreamChannel>();
   const client = useCreateChatClient({
     apiKey: process.env.NEXT_PUBLIC_STREAM_CHAT_API_KEY!,
-    tokenOrProvider: generateChatToken,
+    tokenOrProvider: tokenProvider.current,
     userData: {
       id: userId,
       name: userName,
@@ -50,14 +55,24 @@ export const ChatUI = ({
   useEffect(() => {
     if (!client) return;
 
-    const channel = client.channel("messaging", meetingId, {
+    let cancelled = false;
+    const ch = client.channel("messaging", meetingId, {
       members: [userId],
     });
 
-    setChannel(channel);
-  }, [client, meetingId, meetingName, userId]);
+    ch.watch().then(() => {
+      if (!cancelled) {
+        setChannel(ch);
+      }
+    });
 
-  if (!client) {
+    return () => {
+      cancelled = true;
+      ch.stopWatching();
+    };
+  }, [client, meetingId, userId]);
+
+  if (!client || !channel) {
     return (
       <LoadingState
         title="Loading Chat"
