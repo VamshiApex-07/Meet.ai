@@ -1,4 +1,4 @@
-import { and, eq, not } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import {
   MessageNewEvent,
@@ -44,7 +44,7 @@ async function chatCompletion(
   });
 
   const data = await res.json();
-  console.log("Groq response status:", res.status, JSON.stringify(data).substring(0, 300));
+  console.log("Groq response status:", res.status, "ok:", !!data.choices?.[0]?.message?.content);
   return data.choices?.[0]?.message?.content ?? "";
 }
 
@@ -109,49 +109,33 @@ export async function POST(req: NextRequest) {
     }
     activeSessionStarts.add(meetingId);
 
-    console.log("Looking up meeting:", meetingId);
-    const [existingMeeting] = await db
-      .select()
-      .from(meetings)
-      .where(
-        and(
-          eq(meetings.id, meetingId),
-          not(eq(meetings.status, "completed")),
-          not(eq(meetings.status, "active")),
-          not(eq(meetings.status, "cancelled")),
-          not(eq(meetings.status, "processing")),
-        )
-      );
+    try {
+      const [claimedMeeting] = await db
+        .update(meetings)
+        .set({ status: "active", startedAt: new Date() })
+        .where(and(eq(meetings.id, meetingId), eq(meetings.status, "upcoming")))
+        .returning();
 
-    if (!existingMeeting) {
-      activeSessionStarts.delete(meetingId);
-      console.log("Meeting not found in DB for id:", meetingId);
-      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
-    }
+      if (!claimedMeeting) {
+        console.log("Meeting not found or already claimed for id:", meetingId);
+        return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+      }
 
-    console.log("Meeting found, status:", existingMeeting.status, "agentId:", existingMeeting.agentId);
+      console.log("Meeting claimed, agentId:", claimedMeeting.agentId);
 
-    await db
-      .update(meetings)
-      .set({
-        status: "active",
-        startedAt: new Date(),
-      })
-      .where(eq(meetings.id, existingMeeting.id));
+      const [existingAgent] = await db
+        .select()
+        .from(agents)
+        .where(eq(agents.id, claimedMeeting.agentId));
 
-    const [existingAgent] = await db
-      .select()
-      .from(agents)
-      .where(eq(agents.id, existingMeeting.agentId));
+      if (!existingAgent) {
+        console.log("Agent not found for id:", claimedMeeting.agentId);
+        return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+      }
 
-    if (!existingAgent) {
-      console.log("Agent not found for id:", existingMeeting.agentId);
-      return NextResponse.json({ error: "Agent not found" }, { status: 404 });
-    }
+      console.log("Agent found:", existingAgent.name, "voice:", existingAgent.voice);
 
-    console.log("Agent found:", existingAgent.name, "voice:", existingAgent.voice);
-
-    const systemPrompt = `You are ${existingAgent.name}, an AI participant in this meeting.
+      const systemPrompt = `You are ${existingAgent.name}, an AI participant in this meeting.
 
 IDENTITY:
 - Your name is ${existingAgent.name}. Always refer to yourself as ${existingAgent.name}. Never call yourself "Assistant", "AI", or "the assistant".
@@ -169,32 +153,50 @@ BEHAVIORAL RULES:
 - If you are unsure about something, say so honestly rather than making things up.
 - Maintain a consistent tone and personality throughout the conversation.`;
 
-    const visionAgentsUrl = process.env.VISION_AGENTS_URL || "http://localhost:8000";
-    console.log("Calling Vision Agents at:", `${visionAgentsUrl}/calls/${meetingId}/sessions`);
+      const visionAgentsUrl = process.env.VISION_AGENTS_URL || "http://localhost:8000";
+      console.log("Calling Vision Agents at:", `${visionAgentsUrl}/calls/${meetingId}/sessions`);
 
-    const response = await fetch(
-      `${visionAgentsUrl}/calls/${meetingId}/sessions`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          call_type: "default",
-          instructions: systemPrompt,
-          agent_id: existingAgent.id,
-          agent_name: existingAgent.name,
-          voice: existingAgent.voice || "Kore",
-        }),
+      const visionHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      if (process.env.VISION_AGENT_SECRET) {
+        visionHeaders["x-agent-secret"] = process.env.VISION_AGENT_SECRET;
       }
-    );
 
-    const responseText = await response.text();
-    console.log("Vision Agents response:", response.status, responseText.substring(0, 200));
+      let response;
+      try {
+        response = await fetch(
+          `${visionAgentsUrl}/calls/${meetingId}/sessions`,
+          {
+            method: "POST",
+            headers: visionHeaders,
+            body: JSON.stringify({
+              call_type: "default",
+              instructions: systemPrompt,
+              agent_id: existingAgent.id,
+              agent_name: existingAgent.name,
+              voice: existingAgent.voice || "Kore",
+            }),
+          }
+        );
+      } catch (err) {
+        console.error("Vision Agents request failed:", err);
+        await db
+          .update(meetings)
+          .set({ status: "upcoming", startedAt: null })
+          .where(eq(meetings.id, meetingId));
+        return NextResponse.json({ error: "Agent session failed" }, { status: 502 });
+      }
 
-    if (!response.ok) {
-      console.error("Failed to start Vision Agents session", responseText);
+      if (!response.ok) {
+        console.error("Failed to start Vision Agents session, status:", response.status);
+        await db
+          .update(meetings)
+          .set({ status: "upcoming", startedAt: null })
+          .where(eq(meetings.id, meetingId));
+        return NextResponse.json({ error: "Agent session failed" }, { status: 502 });
+      }
+    } finally {
+      activeSessionStarts.delete(meetingId);
     }
-
-    activeSessionStarts.delete(meetingId);
   } else if (eventType === "call.session_participant_left") {
     const participantLeftEvent = event as unknown as CallSessionParticipantLeftEvent;
     const meetingId = participantLeftEvent.call_cid.split(":")[1];
@@ -268,7 +270,7 @@ BEHAVIORAL RULES:
     const text = messageEvent.message?.text;
     const messageId = messageEvent.message?.id;
 
-    console.log("message.new - userId:", userId, "channelId:", channelId, "text:", text?.substring(0, 50));
+    console.log("message.new - userId:", userId, "channelId:", channelId);
 
     if (!userId || !channelId || !text) {
       console.log("message.new - missing required fields");
@@ -281,13 +283,6 @@ BEHAVIORAL RULES:
     if (messageId && processedMessages.has(messageId)) {
       console.log("message.new - duplicate, skipping:", messageId);
       return NextResponse.json({ status: "ok" });
-    }
-    if (messageId) {
-      processedMessages.add(messageId);
-      if (processedMessages.size > 1000) {
-        const first = processedMessages.values().next().value!;
-        processedMessages.delete(first);
-      }
     }
 
     const [existingMeeting] = await db
@@ -336,7 +331,7 @@ BEHAVIORAL RULES:
 
       const previousMessages = channel.state.messages
         .slice(-5)
-        .filter((msg) => msg.text && msg.text.trim() !== "")
+        .filter((msg) => msg.text && msg.text.trim() !== "" && msg.id !== messageId)
         .map((message) => ({
           role: message.user?.id === existingAgent.id ? "model" as const : "user" as const,
           content: message.text || "",
@@ -371,6 +366,20 @@ BEHAVIORAL RULES:
           image: avatarUrl,
         },
       });
+
+      if (messageId) {
+        processedMessages.add(messageId);
+        if (processedMessages.size > 1000) {
+          const first = processedMessages.values().next().value!;
+          processedMessages.delete(first);
+        }
+      }
+    } else if (messageId) {
+      processedMessages.add(messageId);
+      if (processedMessages.size > 1000) {
+        const first = processedMessages.values().next().value!;
+        processedMessages.delete(first);
+      }
     }
   }
 

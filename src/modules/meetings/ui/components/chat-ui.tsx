@@ -56,6 +56,8 @@ export const ChatUI = ({
     if (!client) return;
 
     let cancelled = false;
+    setChannel(undefined);
+
     const ch = client.channel("messaging", meetingId, {
       members: [userId],
     });
@@ -63,6 +65,11 @@ export const ChatUI = ({
     ch.watch().then(() => {
       if (!cancelled) {
         setChannel(ch);
+      }
+    }).catch((err) => {
+      console.error("Failed to watch chat channel:", err);
+      if (!cancelled) {
+        setChannel(undefined);
       }
     });
 

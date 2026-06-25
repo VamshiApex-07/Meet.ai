@@ -1,10 +1,12 @@
 import asyncio
+import os
 import logging
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from google.genai import types
 from vision_agents.core import Agent, AgentLauncher, Runner, User, ServeOptions
 from vision_agents.plugins import getstream, gemini
+from fastapi import Request, HTTPException
 
 load_dotenv()
 
@@ -113,8 +115,15 @@ launcher = _launcher
 runner = Runner(launcher, serve_options=ServeOptions(cors_allow_origins=["*"]))
 
 
+VISION_AGENT_SECRET = os.environ.get("VISION_AGENT_SECRET", "")
+
+
 @runner.fast_api.post("/calls/{call_id}/sessions")
-async def custom_start_session(call_id: str, body: StartSessionBody):
+async def custom_start_session(call_id: str, body: StartSessionBody, request: Request):
+    if VISION_AGENT_SECRET:
+        secret = request.headers.get("x-agent-secret", "")
+        if secret != VISION_AGENT_SECRET:
+            raise HTTPException(status_code=401, detail="Invalid or missing agent secret")
     logger.info("SESSION REQUEST: call=%s agent_name=%s", call_id, body.agent_name)
     await ConfigStore.push({
         "agent_name": body.agent_name,

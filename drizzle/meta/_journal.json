@@ -8,6 +8,13 @@
       "when": 1782385831469,
       "tag": "0000_reflective_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782426895626,
+      "tag": "0001_yummy_viper",
+      "breakpoints": true
     }
   ]
 }
