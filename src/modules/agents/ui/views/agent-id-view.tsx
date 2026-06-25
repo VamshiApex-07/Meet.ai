@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { useState } from "react";
-import { VideoIcon } from "lucide-react";
+import { VideoIcon, Volume2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useMutation,
@@ -94,6 +94,13 @@ export const AgentIdView = ({ agentId }: Props) => {
               <VideoIcon className="text-blue-700" />
               {data.meetingCount}{" "}
               {data.meetingCount === 1 ? "meeting" : "meetings"}
+            </Badge>
+            <Badge
+              variant="outline"
+              className="flex items-center gap-x-2 [&>svg]:size-4"
+            >
+              <Volume2Icon className="text-purple-700" />
+              {data.voice || "Kore"}
             </Badge>
             <div className="flex flex-col gap-y-4">
               <p className="text-lg font-medium">Instructions</p>
