@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 
@@ -18,6 +18,15 @@ export const UpdateMeetingDialog = ({
 }: UpdateMeetingDialogProps) => {
   const [isPending, setIsPending] = useState(false);
   const toastIdRef = useRef<string | number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (toastIdRef.current) {
+        toast.dismiss(toastIdRef.current);
+        toastIdRef.current = null;
+      }
+    };
+  }, []);
 
   const handlePendingChange = useCallback((pending: boolean) => {
     setIsPending(pending);

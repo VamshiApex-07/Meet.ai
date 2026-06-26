@@ -9,6 +9,7 @@ import { generateAvatarUri } from "@/lib/avatar";
 import { streamVideo } from "@/lib/stream-video";
 import { createTRPCRouter,premiumProcedure,protectedProcedure } from "@/trpc/init";
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, MIN_PAGE_SIZE } from "@/constants";
+import { MAX_FREE_MEETINGS } from "@/modules/premium/constants";
 
 import { MeetingStatus, StreamTranscriptItem } from "../types";
 import { meetingsInsertSchema, meetingsUpdateSchema } from "../schemas";
@@ -43,13 +44,30 @@ export const meetingsRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
       }
 
-      const [createdMeeting] = await db
-        .insert(meetings)
-        .values({
-          ...input,
-          userId: ctx.auth.user.id,
-        })
-        .returning();
+      const [createdMeeting] = await db.transaction(async (tx) => {
+        const [userMeetings] = await tx
+          .select({ count: count() })
+          .from(meetings)
+          .where(eq(meetings.userId, ctx.auth.user.id));
+
+        if (
+          userMeetings.count >= MAX_FREE_MEETINGS &&
+          !ctx.customer?.activeSubscriptions?.length
+        ) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You have reached the maximum number of free meetings",
+          });
+        }
+
+        return await tx
+          .insert(meetings)
+          .values({
+            ...input,
+            userId: ctx.auth.user.id,
+          })
+          .returning();
+      });
 
       const call = streamVideo.video.call("default", createdMeeting.id);
       await call.create({

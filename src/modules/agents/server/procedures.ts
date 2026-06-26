@@ -10,6 +10,7 @@ import {
   MAX_PAGE_SIZE,
   MIN_PAGE_SIZE,
 } from "@/constants";
+import { MAX_FREE_AGENTS } from "@/modules/premium/constants";
 import { TRPCError } from "@trpc/server";
 
 export const agentsRouter = createTRPCRouter({
@@ -125,13 +126,30 @@ export const agentsRouter = createTRPCRouter({
   create: premiumProcedure("agents")
     .input(agentsInsertSchema)
     .mutation(async ({ input, ctx }) => {
-      const [createdAgent] = await db
-        .insert(agents)
-        .values({
-          ...input,
-          userId: ctx.auth.user.id,
-        })
-        .returning();
+      const [createdAgent] = await db.transaction(async (tx) => {
+        const [userAgents] = await tx
+          .select({ count: count() })
+          .from(agents)
+          .where(eq(agents.userId, ctx.auth.user.id));
+
+        if (
+          userAgents.count >= MAX_FREE_AGENTS &&
+          !ctx.customer?.activeSubscriptions?.length
+        ) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You have reached the maximum number of free agents",
+          });
+        }
+
+        return await tx
+          .insert(agents)
+          .values({
+            ...input,
+            userId: ctx.auth.user.id,
+          })
+          .returning();
+      });
       return createdAgent;
     }),
 });
