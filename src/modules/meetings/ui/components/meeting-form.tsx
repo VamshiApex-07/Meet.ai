@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Loader2Icon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,12 +32,14 @@ interface MeetingFormProps {
   onSuccess?: (id?: string) => void;
   onCancel?: () => void;
   initialValues?: MeetingGetOne;
+  onPendingChange?: (isPending: boolean) => void;
 }
 
 export const MeetingForm = ({
   onSuccess,
   onCancel,
   initialValues,
+  onPendingChange,
 }: MeetingFormProps) => {
   const trpc = useTRPC();
   const router = useRouter();
@@ -57,6 +60,12 @@ export const MeetingForm = ({
       onSuccess: async (data) => {
         await queryClient.invalidateQueries(
           trpc.meetings.getMany.queryOptions({}),
+        );
+        await queryClient.invalidateQueries(
+          trpc.agents.getMany.queryOptions({}),
+        );
+        await queryClient.invalidateQueries(
+          trpc.premium.getFreeUsage.queryOptions(),
         );
 
         onSuccess?.(data.id);
@@ -82,7 +91,13 @@ export const MeetingForm = ({
           await queryClient.invalidateQueries(
             trpc.meetings.getOne.queryOptions({ id: initialValues.id }),
           );
+          await queryClient.invalidateQueries(
+            trpc.agents.getOne.queryOptions({ id: initialValues.agentId }),
+          );
         }
+        await queryClient.invalidateQueries(
+          trpc.agents.getMany.queryOptions({}),
+        );
         onSuccess?.();
       },
       onError: (error) => {
@@ -101,6 +116,10 @@ export const MeetingForm = ({
 
   const isEdit = !!initialValues?.id;
   const isPending = createMeeting.isPending || updateMeeting.isPending;
+
+  useEffect(() => {
+    onPendingChange?.(isPending);
+  }, [isPending, onPendingChange]);
 
   const onSubmit = (values: z.infer<typeof meetingsInsertSchema>) => {
     if (isEdit) {
@@ -157,6 +176,7 @@ export const MeetingForm = ({
                     onSearch={setAgentSearch}
                     value={field.value}
                     placeholder="Select an agent"
+                    isLoading={agents.isLoading}
                   />
                 </FormControl>
                 <FormDescription>
@@ -185,7 +205,14 @@ export const MeetingForm = ({
               </Button>
             )}
             <Button disabled={isPending} type="submit">
-              {isEdit ? "Update" : "Create"}
+              {isPending ? (
+                <>
+                  <Loader2Icon className="size-4 animate-spin mr-2" />
+                  {isEdit ? "Updating..." : "Creating..."}
+                </>
+              ) : (
+                isEdit ? "Update" : "Create"
+              )}
             </Button>
           </div>
         </form>

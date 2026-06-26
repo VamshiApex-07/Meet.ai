@@ -1,6 +1,7 @@
 import { useTRPC } from "@/trpc/client";
 import { AgentGetOne } from "../../types";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { agentsInsertSchema, AGENT_VOICES } from "../../schemas";
@@ -26,19 +27,23 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface AgentFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
   initialValues?: AgentGetOne;
+  onPendingChange?: (isPending: boolean) => void;
 }
 
 export const AgentForm = ({
   onSuccess,
   onCancel,
   initialValues,
+  onPendingChange,
 }: AgentFormProps) => {
   const trpc = useTRPC();
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   const createAgent = useMutation(
@@ -47,6 +52,9 @@ export const AgentForm = ({
         await queryClient.invalidateQueries({
           queryKey: trpc.agents.getMany.queryKey(),
         });
+        await queryClient.invalidateQueries(
+          trpc.premium.getFreeUsage.queryOptions(),
+        );
 
         if (initialValues?.id) {
           queryClient.invalidateQueries(
@@ -57,6 +65,9 @@ export const AgentForm = ({
       },
       onError: (error) => {
         toast.error(error.message);
+        if(error.data?.code === "FORBIDDEN"){
+            router.push("/upgrade");
+        }
       },
     }),
   );
@@ -93,6 +104,10 @@ export const AgentForm = ({
 
   const isEdit = !!initialValues?.id;
   const isPending = createAgent.isPending || updateAgent.isPending;
+
+  useEffect(() => {
+    onPendingChange?.(isPending);
+  }, [isPending, onPendingChange]);
 
   const onSubmit = (values: z.infer<typeof agentsInsertSchema>) => {
     if (isEdit) {

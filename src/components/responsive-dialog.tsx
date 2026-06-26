@@ -22,6 +22,7 @@ interface ResponsiveDialogProps {
   children: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  preventClose?: boolean;
 }
 
 export const ResponsiveDialog = ({
@@ -30,12 +31,18 @@ export const ResponsiveDialog = ({
   children,
   open,
   onOpenChange,
+  preventClose,
 }: ResponsiveDialogProps) => {
   const isMobile = useIsMobile();
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen && preventClose) return;
+    onOpenChange(isOpen);
+  };
+
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
+      <Drawer open={open} onOpenChange={handleOpenChange}>
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>{title}</DrawerTitle>
@@ -48,7 +55,7 @@ export const ResponsiveDialog = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
