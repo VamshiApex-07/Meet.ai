@@ -26,6 +26,7 @@ interface Props {
   agentName: string;
   onEdit: () => void;
   onRemove: () => void;
+  isRemoving?: boolean;
 }
 
 export const AgentIdViewHeader = ({
@@ -33,6 +34,7 @@ export const AgentIdViewHeader = ({
   agentName,
   onEdit,
   onRemove,
+  isRemoving,
 }: Props) => {
   return (
     <div className="flex items-center justify-between">
@@ -68,9 +70,9 @@ export const AgentIdViewHeader = ({
             <PencilIcon className="size-4 text-black" />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onRemove}>
+          <DropdownMenuItem onClick={onRemove} disabled={isRemoving}>
             <TrashIcon className="size-4 text-black" />
-            Delete
+            {isRemoving ? "Deleting..." : "Delete"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

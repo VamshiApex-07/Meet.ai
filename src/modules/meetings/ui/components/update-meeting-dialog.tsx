@@ -1,3 +1,5 @@
+import { useState, useRef, useCallback } from "react";
+import { toast } from "sonner";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 
 import { MeetingForm } from "./meeting-form";
@@ -14,15 +16,36 @@ export const UpdateMeetingDialog = ({
   onOpenChange,
   initialValues,
 }: UpdateMeetingDialogProps) => {
+  const [isPending, setIsPending] = useState(false);
+  const toastIdRef = useRef<string | number | null>(null);
+
+  const handlePendingChange = useCallback((pending: boolean) => {
+    setIsPending(pending);
+    if (pending) {
+      toastIdRef.current = toast.loading("Updating meeting, please wait...");
+    } else if (toastIdRef.current) {
+      toast.dismiss(toastIdRef.current);
+      toastIdRef.current = null;
+    }
+  }, []);
+
   return (
     <ResponsiveDialog
       title="Edit Meeting"
       description="Edit the meeting details"
       open={open}
       onOpenChange={onOpenChange}
+      preventClose={isPending}
     >
       <MeetingForm
-        onSuccess={() => onOpenChange(false)}
+        onPendingChange={handlePendingChange}
+        onSuccess={() => {
+          if (toastIdRef.current) {
+            toast.success("Meeting updated!", { id: toastIdRef.current });
+            toastIdRef.current = null;
+          }
+          onOpenChange(false);
+        }}
         onCancel={() => onOpenChange(false)}
         initialValues={initialValues}
       />

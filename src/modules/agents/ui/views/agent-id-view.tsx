@@ -41,6 +41,9 @@ export const AgentIdView = ({ agentId }: Props) => {
         await queryClient.invalidateQueries(
           trpc.agents.getMany.queryOptions({}),
         );
+        await queryClient.invalidateQueries(
+          trpc.premium.getFreeUsage.queryOptions(),
+        );
         router.push("/agents");
       },
       onError: (error) => {
@@ -76,6 +79,7 @@ export const AgentIdView = ({ agentId }: Props) => {
           agentName={data.name}
           onEdit={() => setUpdateAgentDialogOpen(true)}
           onRemove={handleRemoveAgent}
+          isRemoving={removeAgent.isPending}
         />
         <div className="rounded-lg border bg-white">
           <div className="col-span-5 flex flex-col gap-y-5 px-4 py-5">
