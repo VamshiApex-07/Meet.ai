@@ -82,7 +82,7 @@ export const MeetingForm = ({
 
   const updateMeeting = useMutation(
     trpc.meetings.update.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (_data, variables) => {
         await queryClient.invalidateQueries(
           trpc.meetings.getMany.queryOptions({}),
         );
@@ -94,6 +94,11 @@ export const MeetingForm = ({
           await queryClient.invalidateQueries(
             trpc.agents.getOne.queryOptions({ id: initialValues.agentId }),
           );
+          if (variables.agentId !== initialValues.agentId) {
+            await queryClient.invalidateQueries(
+              trpc.agents.getOne.queryOptions({ id: variables.agentId }),
+            );
+          }
         }
         await queryClient.invalidateQueries(
           trpc.agents.getMany.queryOptions({}),
