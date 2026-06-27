@@ -1,6 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
 import JSONL from "jsonl-parse-stringify";
-import { createAgent, openai, TextMessage } from "@inngest/agent-kit";
 
 import { db } from "@/db";
 import { agents, meetings, user } from "@/db/schema";
@@ -8,10 +7,7 @@ import { inngest } from "@/inngest/client";
 
 import { StreamTranscriptItem } from "@/modules/meetings/types";
 
-const summarizer = createAgent({
-  name: "summarizer",
-  system: `
-    You are an expert summarizer. You write readable, concise, simple content. You are given a transcript of a meeting and you need to summarize it.
+const SYSTEM_PROMPT = `You are an expert summarizer. You write readable, concise, simple content. You are given a transcript of a meeting and you need to summarize it.
 
 Use the following markdown structure for every output:
 
@@ -29,14 +25,32 @@ Example:
 
 #### Next Section
 - Feature X automatically does Y
-- Mention of integration with Z
-  `.trim(),
-  model: openai({
-    model: "llama-3.3-70b-versatile",
-    apiKey: process.env.GROQ_API_KEY,
-    baseUrl: "https://api.groq.com/openai/v1",
-  }),
-});
+- Mention of integration with Z`;
+
+async function summarizeTranscript(transcript: string): Promise<string> {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: "Summarize the following transcript:\n\n" + transcript },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`Groq API error (${res.status}): ${errBody}`);
+  }
+
+  const data = await res.json();
+  return data.choices[0].message.content as string;
+}
 
 export const meetingsProcessing = inngest.createFunction(
   {
@@ -102,19 +116,15 @@ export const meetingsProcessing = inngest.createFunction(
       });
     });
 
-    const { output } = await step.run("summarize", async () => {
-      const runResult = await summarizer.run(
-        "Summarize the following transcript: " +
-          JSON.stringify(transcriptWithSpeakers)
-      );
-      return runResult;
+    const summary = await step.run("summarize", async () => {
+      return summarizeTranscript(JSON.stringify(transcriptWithSpeakers));
     });
 
     await step.run("save-summary", async () => {
       await db
         .update(meetings)
         .set({
-          summary: (output[0] as TextMessage).content as string,
+          summary,
           status: "completed",
         })
         .where(eq(meetings.id, event.data.meetingId))
