@@ -79,40 +79,9 @@
 
 ## 🏗️ Architecture
 
-```mermaid
-graph TB
-    subgraph Frontend["Next.js 15 (App Router)"]
-        direction TB
-        TRPC["tRPC API Layer<br/>(CRUD + Dashboard)"]
-        STREAM["Stream Video + Chat<br/>(WebRTC, Transcription)"]
-        INNGEST["Inngest Background Jobs<br/>(Summarization)"]
-    end
-
-    subgraph Database["Data Layer"]
-        DRIZZLE["Drizzle ORM"]
-        NEON[("Neon PostgreSQL")]
-        DRIZZLE --> NEON
-    end
-
-    subgraph Services["External Services"]
-        GROQ["Groq API<br/>(llama-3.3-70b)"]
-        POLAR["Polar.sh<br/>(Payments)"]
-        STREAM_API["Stream API<br/>(Video + Chat)"]
-    end
-
-    subgraph AI["AI Voice Service"]
-        FASTAPI["Python FastAPI<br/>Microservice"]
-        GEMINI["Google Gemini<br/>(Real-time Voice)"]
-        FASTAPI --> GEMINI
-    end
-
-    TRPC --> DRIZZLE
-    STREAM --> STREAM_API
-    INNGEST --> GROQ
-    TRPC --> POLAR
-    FASTAPI --> STREAM_API
-    INNGEST --> STREAM_API
-```
+<p align="center">
+  <img src="/flowchart.svg" alt="Meet.AI Architecture Diagram" width="100%" style="max-width: 800px;">
+</p>
 
 ### Flow
 
