@@ -1,10 +1,3 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="/logo.svg">
-    <img alt="Meet.AI" src="/logo.svg" width="80" height="80">
-  </picture>
-</p>
-
 <h1 align="center">Meet.AI</h1>
 
 <p align="center">
@@ -12,7 +5,6 @@
 </p>
 
 <p align="center">
-  <a href="#-screenshots">Screenshots</a> •
   <a href="#-key-features">Features</a> •
   <a href="#-architecture">Architecture</a> •
   <a href="#-tech-stack">Tech Stack</a> •
@@ -28,26 +20,6 @@
   <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi" alt="FastAPI">
   <img src="https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
-</p>
-
-<br>
-
----
-
-## 📸 Screenshots
-
-<!--
-  Add your screenshots here. Recommended:
-  - Dashboard overview
-  - Meeting lobby
-  - Active call with AI agent
-  - Meeting summary view
-  - AI Chat interface
-  - Searchable transcript
--->
-
-<p align="center">
-  <i>Screenshots coming soon</i>
 </p>
 
 <br>
