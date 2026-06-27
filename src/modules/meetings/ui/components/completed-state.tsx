@@ -24,6 +24,7 @@ import { formatDuration } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Transcript } from "./transcript";
 import { ChatProvider } from "./chat-provider";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Props {
   data: MeetingGetOne;
@@ -31,6 +32,7 @@ interface Props {
 
 export const CompletedState = ({ data }: Props) => {
   const [exporting, setExporting] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleExportPDF = async () => {
     setExporting(true);
@@ -140,12 +142,12 @@ export const CompletedState = ({ data }: Props) => {
         <TabsContent value="summary">
           <div className="bg-white rounded-lg border">
             <div className="px-4 py-5 gap-y-5 flex flex-col col-span-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-medium capitalize">{data.name}</h2>
-                <div className="flex gap-x-2">
+              <div className={`flex ${isMobile ? "flex-col gap-y-3" : "items-center justify-between"}`}>
+                <h2 className={`font-medium capitalize ${isMobile ? "text-xl" : "text-2xl"}`}>{data.name}</h2>
+                <div className={`flex gap-x-2 ${isMobile ? "" : ""}`}>
                   <Button
                     variant="outline"
-                    size="sm"
+                    size={isMobile ? "xs" : "sm"}
                     onClick={() => {
                       const blob = new Blob([data.summary ?? ""], { type: "text/plain" });
                       const url = URL.createObjectURL(blob);
@@ -158,11 +160,11 @@ export const CompletedState = ({ data }: Props) => {
                     className="gap-x-2"
                   >
                     <DownloadIcon className="size-4" />
-                    Download TXT
+                    {isMobile ? "TXT" : "Download TXT"}
                   </Button>
                   <Button
                     variant="outline"
-                    size="sm"
+                    size={isMobile ? "xs" : "sm"}
                     onClick={handleExportPDF}
                     disabled={exporting}
                     className="gap-x-2"
@@ -172,7 +174,7 @@ export const CompletedState = ({ data }: Props) => {
                     ) : (
                       <FileTextIcon className="size-4" />
                     )}
-                    {exporting ? "Exporting..." : "Download PDF"}
+                    {exporting ? "Exporting..." : isMobile ? "PDF" : "Download PDF"}
                   </Button>
                 </div>
               </div>

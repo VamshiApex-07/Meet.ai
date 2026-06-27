@@ -59,7 +59,7 @@ export const Transcript = ({ meetingId }: Props) => {
       <div className="relative">
         <Input
           placeholder="Search Transcript"
-          className="pl-7 h-9 w-[240px]"
+          className="pl-7 h-9 w-full md:w-[240px]"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />

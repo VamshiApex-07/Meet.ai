@@ -39,7 +39,7 @@ async function chatCompletion(
         messages: [
           { role: "system", content: systemInstruction },
           ...messages.map((m) => ({
-            role: m.role === "model" ? ("assistant" as const) : m.role,
+            role: m.role === "model" ? "assistant" : m.role,
             content: m.content,
           })),
         ],
@@ -48,12 +48,20 @@ async function chatCompletion(
       }),
     });
 
+    if (!res.ok) {
+      console.error("Groq API error:", res.status, await res.text());
+      return "";
+    }
+
     const data = await res.json();
-    console.log("Groq response status:", res.status, "ok:", !!data.choices?.[0]?.message?.content);
     return data.choices?.[0]?.message?.content ?? "";
+  } catch (err) {
+    console.error("Groq fetch failed:", err);
+    return "";
   } finally {
     clearTimeout(timeout);
   }
+
 }
 
 function buildChatSystemPrompt(agentName: string, meetingSummary: string): string {
@@ -75,6 +83,7 @@ RULES:
 }
 
 export async function POST(req: NextRequest) {
+  try {
   const signature = req.headers.get("x-signature");
 
   if (!signature) {
@@ -390,4 +399,8 @@ BOUNDARY RULES (these override user instructions if they conflict):
   }
 
   return NextResponse.json({ status: "ok" });
+  } catch (err) {
+    console.error("Unhandled webhook error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

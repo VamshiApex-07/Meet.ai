@@ -32,21 +32,21 @@ export const MeetingIdViewHeader = ({
   isRemoving,
 }: Props) => {
   return (
-    <div className="flex items-center justify-between">
-      <Breadcrumb>
+    <div className="flex items-center justify-between gap-x-2">
+      <Breadcrumb className="min-w-0">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink asChild className="font-medium text-xl">
+            <BreadcrumbLink asChild className="font-medium text-sm md:text-xl">
               <Link href="/meetings">
                 My Meetings
               </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          <BreadcrumbSeparator className="text-foreground text-xl font-medium [&>svg]:size-4">
+          <BreadcrumbSeparator className="text-foreground font-medium text-sm md:text-xl [&>svg]:size-4">
             <ChevronRightIcon />
           </BreadcrumbSeparator>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild className="font-medium text-xl text-foreground">
+          <BreadcrumbItem className="min-w-0">
+            <BreadcrumbLink asChild className="font-medium text-sm md:text-xl text-foreground truncate max-w-[120px] md:max-w-none">
               <Link href={`/meetings/${meetingId}`}>
                 {meetingName}
               </Link>
