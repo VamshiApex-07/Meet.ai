@@ -151,4 +151,11 @@ async def health():
 
 
 if __name__ == "__main__":
-    runner.cli()
+    import uvicorn
+    port = int(os.environ.get("PORT", "8001"))
+    uvicorn.run(
+        "main:runner.fast_api",
+        host="0.0.0.0",
+        port=port,
+        log_level="info",
+    )
