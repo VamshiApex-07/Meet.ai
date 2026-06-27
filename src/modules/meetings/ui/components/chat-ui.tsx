@@ -38,7 +38,7 @@ export const ChatUI = ({
   generateChatTokenRef.current = generateChatToken;
 
   const tokenProvider = useRef(async () => {
-    return generateChatTokenRef.current();
+    return generateChatTokenRef.current({ channelId: meetingId });
   });
 
   const [channel, setChannel] = useState<StreamChannel>();

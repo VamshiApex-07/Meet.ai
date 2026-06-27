@@ -15,13 +15,17 @@ import { meetingsInsertSchema, meetingsUpdateSchema } from "../schemas";
 import { streamChat } from "@/lib/stream-chat";
 
 export const meetingsRouter = createTRPCRouter({
-  generateChatToken: protectedProcedure.mutation(async ({ ctx }) => {
+  generateChatToken: protectedProcedure
+    .input(z.object({ channelId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
     try {
       const token = streamChat.createToken(ctx.auth.user.id);
       await streamChat.upsertUser({
         id: ctx.auth.user.id,
         role: "user",
       });
+      const channel = streamChat.channel("messaging", input.channelId);
+      await channel.addMembers([ctx.auth.user.id]);
       return token;
     } catch (error) {
       console.error("Failed to generate chat token:", error);
