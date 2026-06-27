@@ -1,5 +1,12 @@
 # Meet.AI
 
+![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 An AI-powered meeting assistant. Create AI agents that join your video calls, transcribe conversations, generate summaries, and let you chat with agents about what was discussed after the meeting ends.
 
 ## Architecture
