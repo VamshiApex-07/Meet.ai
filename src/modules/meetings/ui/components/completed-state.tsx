@@ -1,8 +1,7 @@
 import Link from "next/link";
 import Markdown from "react-markdown";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import rehypeSanitize from "rehype-sanitize";
 import {
   SparklesIcon,
@@ -31,26 +30,49 @@ interface Props {
 }
 
 export const CompletedState = ({ data }: Props) => {
-  const summaryRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
 
   const handleExportPDF = async () => {
-    if (!summaryRef.current) return;
     setExporting(true);
-
     try {
-      const canvas = await html2canvas(summaryRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
-      const imgWidth = 190;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 14;
+      const maxWidth = pageWidth - margin * 2;
 
-      pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(18);
+      pdf.text(data.name, margin, 20);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.setTextColor(100);
+      if (data.startedAt) {
+        pdf.text(format(data.startedAt, "PPP"), margin, 28);
+      }
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(11);
+      pdf.setTextColor(0);
+
+      const lines = pdf.splitTextToSize(
+        data.summary?.replace(/[#*`\[\]]/g, "") ?? "",
+        maxWidth,
+      );
+
+      let y = 38;
+      for (const line of lines) {
+        if (y > 275) {
+          pdf.addPage();
+          y = 20;
+        }
+        pdf.text(line, margin, y);
+        y += 5.5;
+      }
+
       pdf.save(`${data.name.replace(/\s+/g, "_")}_summary.pdf`);
+    } catch (error) {
+      console.error("PDF export failed:", error);
     } finally {
       setExporting(false);
     }
@@ -117,7 +139,7 @@ export const CompletedState = ({ data }: Props) => {
         </TabsContent>
         <TabsContent value="summary">
           <div className="bg-white rounded-lg border">
-            <div ref={summaryRef} className="px-4 py-5 gap-y-5 flex flex-col col-span-5">
+            <div className="px-4 py-5 gap-y-5 flex flex-col col-span-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-medium capitalize">{data.name}</h2>
                 <div className="flex gap-x-2">
