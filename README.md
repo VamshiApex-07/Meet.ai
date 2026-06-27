@@ -80,7 +80,7 @@
 ## 🏗️ Architecture
 
 <p align="center">
-  <img src="/flowchart.svg" alt="Meet.AI Architecture Diagram" width="100%" style="max-width: 800px;">
+  <img src="public/flowchart.svg" alt="Meet.AI Architecture Diagram" width="100%" style="max-width: 800px;">
 </p>
 
 ### Flow
