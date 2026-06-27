@@ -2,9 +2,10 @@
 import { useEffect, useState } from "react";
 import { PanelLeftCloseIcon, PanelLeftIcon } from "lucide-react";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
-import { SearchIcon } from "lucide-react";
+import { SearchIcon, StarIcon } from "lucide-react";
 import { DashboardCommand } from "./dashboard-command";
 export const DashboardNavbar = () => {
   const { state, toggleSidebar, isMobile } = useSidebar();
@@ -43,6 +44,13 @@ export const DashboardNavbar = () => {
             <span className="text-xs">&#8984;</span>K
           </kbd>
         </Button>
+        <Link
+          href="/upgrade"
+          className="ml-auto md:ml-0 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        >
+          <StarIcon className="size-4" />
+          <span className="hidden md:inline">Upgrade</span>
+        </Link>
       </nav>
     </>
   );

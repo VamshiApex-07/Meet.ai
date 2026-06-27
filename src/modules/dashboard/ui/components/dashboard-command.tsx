@@ -10,6 +10,7 @@ import {
   CommandGroup,
   CommandEmpty
 } from "@/components/ui/command";
+import { StarIcon } from "lucide-react";
 import { useTRPC } from "@/trpc/client";
 import { GeneratedAvatar } from "@/components/generated-avatar";
 
@@ -61,6 +62,12 @@ export const DashboardCommand = ({ open, setOpen }: Props) => {
               {meeting.name}
             </CommandItem>
           ))}
+        </CommandGroup>
+        <CommandGroup heading="Quick Actions">
+          <CommandItem onSelect={() => { router.push("/upgrade"); setOpen(false); }}>
+            <StarIcon className="size-4" />
+            Upgrade Plan
+          </CommandItem>
         </CommandGroup>
         <CommandGroup heading="Agents">
           <CommandEmpty>
