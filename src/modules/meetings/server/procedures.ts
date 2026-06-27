@@ -82,13 +82,14 @@ export const meetingsRouter = createTRPCRouter({
         id: existingAgent.id,
         name: existingAgent.name,
         image: generateAvatarUri({ seed: existingAgent.name, variant: "botttsNeutral" }),
+        role: "user",
       });
 
       const chatChannel = streamChat.channel("messaging", createdMeeting.id, {
-        members: [ctx.auth.user.id, existingAgent.id],
         created_by_id: ctx.auth.user.id,
       });
       await chatChannel.create();
+      await chatChannel.addMembers([ctx.auth.user.id, existingAgent.id]);
 
       return createdMeeting;
     }),

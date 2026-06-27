@@ -58,9 +58,7 @@ export const ChatUI = ({
     let cancelled = false;
     setChannel(undefined);
 
-    const ch = client.channel("messaging", meetingId, {
-      members: [userId],
-    });
+    const ch = client.channel("messaging", meetingId);
 
     ch.watch().then(() => {
       if (!cancelled) {
@@ -89,13 +87,11 @@ export const ChatUI = ({
   }
 
   return (
-    <div className="bg-white rounded-lg border overflow-hidden">
+    <div className="bg-white rounded-lg border" style={{ maxHeight: "calc(100dvh - 24rem)", minHeight: "300px" }}>
       <Chat client={client}>
         <Channel channel={channel}>
           <Window>
-            <div className="flex-1 overflow-y-auto max-h-[calc(100vh-23rem)] border-b">
-              <MessageList />
-            </div>
+            <MessageList />
             <MessageComposer />
           </Window>
           <Thread />
