@@ -12,6 +12,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Meet.AI",
   description: "AI-powered meeting assistant with smart agents, transcription, and summarization",
+  icons: [{ rel: "icon", url: "/logo.svg" }],
 };
 
 export default function RootLayout({
