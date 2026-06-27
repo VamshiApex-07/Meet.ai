@@ -82,7 +82,7 @@ export const MeetingForm = ({
 
   const updateMeeting = useMutation(
     trpc.meetings.update.mutationOptions({
-      onSuccess: async (_data, variables) => {
+      onSuccess: async () => {
         await queryClient.invalidateQueries(
           trpc.meetings.getMany.queryOptions({}),
         );
@@ -94,11 +94,6 @@ export const MeetingForm = ({
           await queryClient.invalidateQueries(
             trpc.agents.getOne.queryOptions({ id: initialValues.agentId }),
           );
-          if (variables.agentId !== initialValues.agentId) {
-            await queryClient.invalidateQueries(
-              trpc.agents.getOne.queryOptions({ id: variables.agentId }),
-            );
-          }
         }
         await queryClient.invalidateQueries(
           trpc.agents.getMany.queryOptions({}),
@@ -128,7 +123,7 @@ export const MeetingForm = ({
 
   const onSubmit = (values: z.infer<typeof meetingsInsertSchema>) => {
     if (isEdit) {
-      updateMeeting.mutate({ ...values, id: initialValues.id });
+      updateMeeting.mutate({ name: values.name, id: initialValues.id });
     } else {
       createMeeting.mutate(values);
     }
@@ -155,49 +150,79 @@ export const MeetingForm = ({
               </FormItem>
             )}
           />
-          <FormField
-            name="agentId"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Agent</FormLabel>
-                <FormControl>
-                  <CommandSelect
-                    options={(agents.data?.items ?? []).map((agent) => ({
-                      id: agent.id,
-                      value: agent.id,
-                      children: (
-                        <div className="flex items-center gap-x-2">
-                          <GeneratedAvatar
-                            seed={agent.name}
-                            variant="botttsNeutral"
-                            className="size-6 border"
-                          />
-                          <span>{agent.name}</span>
-                        </div>
-                      ),
-                    }))}
-                    onSelect={field.onChange}
-                    onSearch={setAgentSearch}
-                    value={field.value}
-                    placeholder="Select an agent"
-                    isLoading={agents.isLoading}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Not found what you&apos;re looking for?{" "}
-                  <button
-                    type="button"
-                    className="text-primary hover:underline"
-                    onClick={() => setOpenNewAgentDialog(true)}
-                  >
-                    Create new agent
-                  </button>
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {isEdit ? (
+            <FormField
+              name="agentId"
+              control={form.control}
+              render={({ field }) => {
+                const agent = agents.data?.items.find((a) => a.id === field.value);
+                return (
+                  <FormItem>
+                    <FormLabel>Agent</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-x-2 rounded-lg border px-3 py-2 text-sm text-muted-foreground">
+                        {agent && (
+                          <>
+                            <GeneratedAvatar
+                              seed={agent.name}
+                              variant="botttsNeutral"
+                              className="size-5 border"
+                            />
+                            <span>{agent.name}</span>
+                          </>
+                        )}
+                        <span className="text-xs">(cannot be changed after creation)</span>
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                );
+              }}
+            />
+          ) : (
+            <FormField
+              name="agentId"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Agent</FormLabel>
+                  <FormControl>
+                    <CommandSelect
+                      options={(agents.data?.items ?? []).map((agent) => ({
+                        id: agent.id,
+                        value: agent.id,
+                        children: (
+                          <div className="flex items-center gap-x-2">
+                            <GeneratedAvatar
+                              seed={agent.name}
+                              variant="botttsNeutral"
+                              className="size-6 border"
+                            />
+                            <span>{agent.name}</span>
+                          </div>
+                        ),
+                      }))}
+                      onSelect={field.onChange}
+                      onSearch={setAgentSearch}
+                      value={field.value}
+                      placeholder="Select an agent"
+                      isLoading={agents.isLoading}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Not found what you&apos;re looking for?{" "}
+                    <button
+                      type="button"
+                      className="text-primary hover:underline"
+                      onClick={() => setOpenNewAgentDialog(true)}
+                    >
+                      Create new agent
+                    </button>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <div className="flex justify-between gap-x-2">
             {onCancel && (
               <Button

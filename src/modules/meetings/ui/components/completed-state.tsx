@@ -1,11 +1,17 @@
 import Link from "next/link";
 import Markdown from "react-markdown";
+import { useRef, useState } from "react";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
+import rehypeSanitize from "rehype-sanitize";
 import {
   SparklesIcon,
   FileTextIcon,
   BookOpenTextIcon,
   FileVideoIcon,
   ClockFadingIcon,
+  DownloadIcon,
+  Loader2Icon,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -16,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MeetingGetOne } from "../../types";
 import { Badge } from "@/components/ui/badge";
 import { formatDuration } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Transcript } from "./transcript";
 import { ChatProvider } from "./chat-provider";
 
@@ -24,6 +31,31 @@ interface Props {
 }
 
 export const CompletedState = ({ data }: Props) => {
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportPDF = async () => {
+    if (!summaryRef.current) return;
+    setExporting(true);
+
+    try {
+      const canvas = await html2canvas(summaryRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
+      pdf.save(`${data.name.replace(/\s+/g, "_")}_summary.pdf`);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-y-4">
       <Tabs defaultValue="summary">
@@ -70,17 +102,39 @@ export const CompletedState = ({ data }: Props) => {
         </TabsContent>
         <TabsContent value="recording">
           <div className="bg-white rounded-lg border px-4 py-5">
-            <video
-              src={data.recordingUrl!}
-              className="w-full rounded-lg"
-              controls
-            />
+            {data.recordingUrl ? (
+              <video
+                src={data.recordingUrl}
+                className="w-full rounded-lg"
+                controls
+              />
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Recording not available yet
+              </p>
+            )}
           </div>
         </TabsContent>
         <TabsContent value="summary">
           <div className="bg-white rounded-lg border">
-            <div className="px-4 py-5 gap-y-5 flex flex-col col-span-5">
-              <h2 className="text-2xl font-medium capitalize">{data.name}</h2>
+            <div ref={summaryRef} className="px-4 py-5 gap-y-5 flex flex-col col-span-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-medium capitalize">{data.name}</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportPDF}
+                  disabled={exporting}
+                  className="gap-x-2"
+                >
+                  {exporting ? (
+                    <Loader2Icon className="size-4 animate-spin" />
+                  ) : (
+                    <DownloadIcon className="size-4" />
+                  )}
+                  {exporting ? "Exporting..." : "Download PDF"}
+                </Button>
+              </div>
               <div className="flex gap-x-2 items-center">
                 <Link
                   href={`/agents/${data.agent.id}`}
@@ -108,6 +162,7 @@ export const CompletedState = ({ data }: Props) => {
               </Badge>
               <div>
                 <Markdown
+                  rehypePlugins={[rehypeSanitize]}
                   components={{
                     h1: (props) => (
                       <h1 className="text-2xl font-medium mb-6" {...props} />

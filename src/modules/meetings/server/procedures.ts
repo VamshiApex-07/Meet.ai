@@ -1,7 +1,7 @@
 import { z } from "zod";
 import JSONL from "jsonl-parse-stringify";
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, getTableColumns, ilike, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, getTableColumns, ilike, inArray, sql, sum } from "drizzle-orm";
 
 import { db } from "@/db";
 import { agents, meetings, user } from "@/db/schema";
@@ -341,4 +341,80 @@ export const meetingsRouter = createTRPCRouter({
         totalPages,
       };
     }),
+  getDashboardStats: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.auth.user.id;
+
+    const [totalMeetings] = await db
+      .select({ count: count() })
+      .from(meetings)
+      .where(eq(meetings.userId, userId));
+
+    const statusCounts = await db
+      .select({
+        status: meetings.status,
+        count: count(),
+      })
+      .from(meetings)
+      .where(eq(meetings.userId, userId))
+      .groupBy(meetings.status);
+
+    const [durationResult] = await db
+      .select({
+        total: sum(
+          sql`EXTRACT(EPOCH FROM (meetings.ended_at - meetings.started_at))`
+        ),
+      })
+      .from(meetings)
+      .where(
+        and(eq(meetings.userId, userId), eq(meetings.status, "completed"))
+      );
+
+    const [totalAgents] = await db
+      .select({ count: count() })
+      .from(agents)
+      .where(eq(agents.userId, userId));
+
+    const recentMeetings = await db
+      .select({
+        ...getTableColumns(meetings),
+        agent: agents,
+      })
+      .from(meetings)
+      .innerJoin(agents, eq(meetings.agentId, agents.id))
+      .where(eq(meetings.userId, userId))
+      .orderBy(desc(meetings.createdAt))
+      .limit(5);
+
+    const recentAgents = await db
+      .select({
+        ...getTableColumns(agents),
+        meetingCount: count(meetings.id),
+      })
+      .from(agents)
+      .leftJoin(meetings, eq(agents.id, meetings.agentId))
+      .where(eq(agents.userId, userId))
+      .groupBy(agents.id)
+      .orderBy(desc(agents.createdAt))
+      .limit(5);
+
+    const statusMap: Record<string, number> = {
+      upcoming: 0,
+      active: 0,
+      completed: 0,
+      processing: 0,
+      cancelled: 0,
+    };
+    for (const s of statusCounts) {
+      statusMap[s.status] = s.count;
+    }
+
+    return {
+      totalMeetings: totalMeetings.count,
+      totalAgents: totalAgents.count,
+      totalDuration: durationResult?.total ?? 0,
+      meetingsByStatus: statusMap,
+      recentMeetings,
+      recentAgents,
+    };
+  }),
 });

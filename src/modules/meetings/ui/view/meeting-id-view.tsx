@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { SparklesIcon } from "lucide-react";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 
 import { useTRPC } from "@/trpc/client";
@@ -34,9 +36,26 @@ export const MeetingIdView = ({ meetingId }: Props) => {
     "The following action will remove this meeting"
   );
 
-  const { data } = useSuspenseQuery(
-    trpc.meetings.getOne.queryOptions({ id: meetingId }),
-  );
+  const { data } = useSuspenseQuery({
+    ...trpc.meetings.getOne.queryOptions({ id: meetingId }),
+    refetchInterval: (query) => {
+      const state = query.state.data;
+      return state?.status === "processing" ? 5000 : false;
+    },
+  });
+
+  const prevStatusRef = useRef(data.status);
+  useEffect(() => {
+    const prevStatus = prevStatusRef.current;
+    prevStatusRef.current = data.status;
+
+    if (prevStatus === "processing" && data.status === "completed") {
+      toast.success("Summary ready!", {
+        description: `"${data.name}" has been processed`,
+        icon: <SparklesIcon className="size-4" />,
+      });
+    }
+  }, [data.status, data.name]);
 
   const removeMeeting = useMutation(
     trpc.meetings.remove.mutationOptions({

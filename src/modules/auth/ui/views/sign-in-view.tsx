@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { OctagonAlertIcon } from "lucide-react";
 import { FaGithub, FaGoogle } from "react-icons/fa";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -185,7 +186,7 @@ export const SignInView = () => {
           </Form>
 
           <div className="from-sidebar-accent to-sidebar relative hidden flex-col items-center justify-center gap-y-4 bg-radial md:flex">
-            <img src="/logo.svg" alt="Image" className="h-[92px] w-[92px]" />
+            <Image src="/logo.svg" alt="Meet.AI" width={92} height={92} />
             <p className="text-2xl font-semibold text-white">Meet.AI</p>
           </div>
         </CardContent>
