@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from google.genai import types
 from vision_agents.core import Agent, AgentLauncher, Runner, User, ServeOptions
 from vision_agents.plugins import getstream, gemini
+import uvicorn
 from fastapi import Request, HTTPException
 
 load_dotenv()
@@ -151,7 +152,6 @@ async def health():
 
 
 if __name__ == "__main__":
-    import uvicorn
     port = int(os.environ.get("PORT", "8001"))
     uvicorn.run(
         "main:runner.fast_api",
