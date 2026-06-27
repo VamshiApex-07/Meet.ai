@@ -120,20 +120,39 @@ export const CompletedState = ({ data }: Props) => {
             <div ref={summaryRef} className="px-4 py-5 gap-y-5 flex flex-col col-span-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-medium capitalize">{data.name}</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportPDF}
-                  disabled={exporting}
-                  className="gap-x-2"
-                >
-                  {exporting ? (
-                    <Loader2Icon className="size-4 animate-spin" />
-                  ) : (
+                <div className="flex gap-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const blob = new Blob([data.summary ?? ""], { type: "text/plain" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${data.name.replace(/\s+/g, "_")}_summary.txt`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="gap-x-2"
+                  >
                     <DownloadIcon className="size-4" />
-                  )}
-                  {exporting ? "Exporting..." : "Download PDF"}
-                </Button>
+                    Download TXT
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportPDF}
+                    disabled={exporting}
+                    className="gap-x-2"
+                  >
+                    {exporting ? (
+                      <Loader2Icon className="size-4 animate-spin" />
+                    ) : (
+                      <FileTextIcon className="size-4" />
+                    )}
+                    {exporting ? "Exporting..." : "Download PDF"}
+                  </Button>
+                </div>
               </div>
               <div className="flex gap-x-2 items-center">
                 <Link
