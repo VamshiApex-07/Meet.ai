@@ -1,6 +1,10 @@
 <h1 align="center">Meet.AI</h1>
 
 <p align="center">
+  <img src="/logo.svg" alt="Meet.AI" width="80" height="80">
+</p>
+
+<p align="center">
   <b>AI-powered meeting assistant — intelligent agents that join your calls, transcribe conversations, generate summaries, and answer questions about what was discussed.</b>
 </p>
 
