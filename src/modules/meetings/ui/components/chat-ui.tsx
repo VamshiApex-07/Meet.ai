@@ -87,7 +87,7 @@ export const ChatUI = ({
   }
 
   return (
-    <div className="bg-white rounded-lg border" style={{ maxHeight: "calc(100dvh - 24rem)", minHeight: "300px" }}>
+    <div className="bg-white rounded-lg border" style={{ height: "calc(100dvh - 24rem)", minHeight: "300px" }}>
       <Chat client={client}>
         <Channel channel={channel}>
           <Window>
