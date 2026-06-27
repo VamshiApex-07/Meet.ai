@@ -1,7 +1,7 @@
 <h1 align="center">Meet.AI</h1>
 
 <p align="center">
-  <img src="/logo.svg" alt="Meet.AI" width="80" height="80">
+  <img src="public/logo.svg" alt="Meet.AI" width="80" />
 </p>
 
 <p align="center">
