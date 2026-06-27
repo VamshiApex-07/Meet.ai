@@ -8,6 +8,21 @@ from vision_agents.core import Agent, AgentLauncher, Runner, User, ServeOptions
 from vision_agents.plugins import getstream, gemini
 import uvicorn
 from fastapi import Request, HTTPException
+from vision_agents.core.events.manager import EventsManager
+
+_original_register = EventsManager.register_events_from_module
+
+
+def _patched_register(self, module, prefix="", ignore_not_compatible=True):
+    for name, class_ in module.__dict__.items():
+        if name.endswith("Event") and (
+            not prefix or (getattr(class_, "type", "") or "").startswith(prefix)
+        ):
+            self.register(class_, ignore_not_compatible=ignore_not_compatible)
+            self._modules.setdefault(module.__name__, []).append(class_)
+
+
+EventsManager.register_events_from_module = _patched_register
 
 load_dotenv()
 
