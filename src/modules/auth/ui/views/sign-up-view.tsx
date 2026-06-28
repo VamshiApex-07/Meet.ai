@@ -61,12 +61,12 @@ export const SignUpView = () => {
         name: data.name,
         email: data.email,
         password: data.password,
-        callbackURL: "/",
+        callbackURL: "/verify-otp",
       },
       {
         onSuccess: () => {
           setPending(false);
-          router.push("/");
+          router.push("/verify-otp");
         },
         onError: ({ error }) => {
           setPending(false);
@@ -193,7 +193,7 @@ export const SignUpView = () => {
                   </Alert>
                 )}
                 <Button disabled={pending} type="submit" className="w-full">
-                  Sign in
+                  Sign up
                 </Button>
                 <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                   <span className="bg-card text-muted-foreground relative z-10 px-2">

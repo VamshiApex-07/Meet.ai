@@ -1,25 +1,33 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import {polar,checkout,portal} from "@polar-sh/better-auth"
+import { emailOTP } from "better-auth/plugins";
+import { polar, checkout, portal } from "@polar-sh/better-auth"
 
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 
 import { polarClient } from "./polar";
+import { sendOTPEmail } from "./email";
 
 export const auth = betterAuth({
   plugins: [
+    emailOTP({
+      sendVerificationOTP: async ({ email, otp }) => {
+        await sendOTPEmail(email, otp);
+      },
+      sendVerificationOnSignUp: true,
+    }),
     polar({
       client: polarClient,
       createCustomerOnSignUp: true,
-      use : [
+      use: [
         checkout({
-          authenticatedUsersOnly:true,
-          successUrl:"/upgrade"
+          authenticatedUsersOnly: true,
+          successUrl: "/upgrade"
         }),
         portal(),
       ]
-    })
+    }),
   ],
   trustedOrigins: process.env.TRUSTED_ORIGINS
     ? process.env.TRUSTED_ORIGINS.split(",")
