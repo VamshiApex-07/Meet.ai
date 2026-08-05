@@ -98,7 +98,7 @@ async def create_agent(**kwargs) -> Agent:
             id=agent_id,
         ),
         instructions=instructions,
-        llm=gemini.Realtime(config=live_config),
+        llm=gemini.Realtime(model="gemini-live-2.5-flash-preview", config=live_config),
     )
 
 
