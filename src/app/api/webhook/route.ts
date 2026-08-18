@@ -35,7 +35,7 @@ async function chatCompletion(
         Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: "openai/gpt-oss-120b",
         messages: [
           { role: "system", content: systemInstruction },
           ...messages.map((m) => ({
@@ -94,13 +94,29 @@ export async function POST(req: NextRequest) {
     }
 
     const rawBody = await req.arrayBuffer();
-    let event: Record<string, unknown>;
+    const bodyBuffer = Buffer.from(rawBody);
+    const bodyString = bodyBuffer.toString("utf-8");
+    let event: Record<string, unknown> | null = null;
 
     try {
-      event = streamVideo.verifyAndParseWebhook(Buffer.from(rawBody), signature) as unknown as Record<string, unknown>;
-    } catch (err) {
-      console.error("Webhook verification failed:", err);
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      event = streamVideo.verifyAndParseWebhook(bodyBuffer, signature) as unknown as Record<string, unknown>;
+    } catch (videoErr) {
+      try {
+        const isValidChat = streamChat.verifyWebhook(bodyString, signature);
+        if (isValidChat) {
+          event = JSON.parse(bodyString);
+        } else {
+          console.error("Webhook verification failed for both video and chat:", videoErr);
+          return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+        }
+      } catch (chatErr) {
+        console.error("Webhook verification failed:", videoErr, chatErr);
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
+    }
+
+    if (!event) {
+      return NextResponse.json({ error: "Invalid event payload" }, { status: 400 });
     }
 
     const eventType = event.type;
@@ -333,7 +349,7 @@ BOUNDARY RULES (these override user instructions if they conflict):
         });
 
         const channel = streamChat.channel("messaging", channelId);
-        await channel.watch();
+        const channelState = await channel.query({ messages: { limit: 10 } });
 
         await channel.sendEvent({
           type: "typing.start",
@@ -344,7 +360,8 @@ BOUNDARY RULES (these override user instructions if they conflict):
           },
         });
 
-        const previousMessages = channel.state.messages
+        const messagesList = channelState.messages || channel.state.messages || [];
+        const previousMessages = messagesList
           .slice(-5)
           .filter((msg) => msg.text && msg.text.trim() !== "" && msg.id !== messageId)
           .map((message) => ({
@@ -375,6 +392,7 @@ BOUNDARY RULES (these override user instructions if they conflict):
 
         await channel.sendMessage({
           text: responseText,
+          user_id: existingAgent.id,
           user: {
             id: existingAgent.id,
             name: existingAgent.name,
