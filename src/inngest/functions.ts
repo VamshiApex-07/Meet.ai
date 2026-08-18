@@ -35,7 +35,7 @@ async function summarizeTranscript(transcript: string): Promise<string> {
       Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: "Summarize the following transcript:\n\n" + transcript },
