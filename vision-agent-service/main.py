@@ -109,6 +109,7 @@ async def join_call(agent: Agent, call_type: str, call_id: str, **kwargs) -> Non
         if agent.agent_user.name != "__warmup__":
             logger.info("[Agent: %s] Triggering greeting...", agent.agent_user.name)
             await agent.simple_response("Greet everyone, introduce yourself by name, and explain why you are here.")
+            await asyncio.sleep(3)
         await agent.finish()
 
 
